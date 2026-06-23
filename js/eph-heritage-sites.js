@@ -1,8 +1,9 @@
 'use strict';
 
+// KUNCI: Diubah dari 'let' menjadi 'var' agar terjangkau oleh fungsi resetApp di JS 1
 const CHUNK_SIZE = 35;
-let currentRenderIndex = 0;
-let currentFilteredRecords = [];
+var currentRenderIndex = 0;
+var currentFilteredRecords = [];
 
 function formatWikidataDate(dateString, precision) {
   if (!dateString) return null;  
@@ -70,15 +71,12 @@ function doPreProcessing() {
 
 function populateProvinceTypesData() {
   
-  // === TANGKAP INPUT PENGGUNA ===
+  // TANGKAP INPUT PENGGUNA
   let inputTxt = document.getElementById('jenis-input').value.trim();
-  
-  // === SUNTIKKAN KE SPARQL ===
   let dynamicQuery = SPARQL_QUERY_0.replace('<PLACEHOLDER_JENIS>', inputTxt);
 
-  // === JALANKAN KUERI DINAMIS ===
   return queryWdqsThenProcess(
-    dynamicQuery, // Kita gunakan kueri yang sudah disuntik, bukan SPARQL_QUERY_0 asli
+    dynamicQuery,
     function(result) {
       let qid = result.siteQid.value;
       if (!(qid in Records)) {
@@ -355,7 +353,6 @@ let currentSearchQuery = '';
 function generateFilterSelect() {
   let selectRegion = document.getElementById('filter-region');
 
-  // 1. Bangun Master Dropdown (Provinsi Dinamis)
   selectRegion.innerHTML = `<option value="all">Semua Wilayah – ${ProvinceIndex['all'].total}</option>`;
   
   Object.keys(ProvinceIndex)
@@ -371,22 +368,17 @@ function generateFilterSelect() {
 
   applyIntersectionFilter(true);
   
-  // 2. Event Listener Wilayah
   selectRegion.addEventListener('change', function() {
     currentRegionFilter = this.value;
     applyIntersectionFilter();
   });
 
-  // ============================================================
-  // LOGIKA DROPDOWN USIA BARU
-  // ============================================================
   let selectKombinasi = document.getElementById('filter-sort-kombinasi');
   if (selectKombinasi) {
     selectKombinasi.addEventListener('change', function() {
       let pilihan = this.value;
-      currentUsiaFilter = 'all'; // Default
+      currentUsiaFilter = 'all'; 
 
-      // Menangkap variasi usia berdasarkan value dari HTML
       if (pilihan === 'filter-usia-50') {
         currentUsiaFilter = 'usia_50'; 
       } else if (pilihan === 'filter-usia-100') {
@@ -509,32 +501,22 @@ function applyIntersectionFilter(preventZoom = false) {
       }
     }
 
-    // ============================================================
-    // MESIN FILTER USIA DINAMIS
-    // ============================================================
     let matchUsia = true;
-    // Jika filter usia sedang digunakan (mengandung kata 'usia_')
     if (currentUsiaFilter.startsWith('usia_')) {
       if (record.rawTahunBerdiri) {
         let tahunBangunan = parseInt(record.rawTahunBerdiri.substring(0, 4));
-        
-        // Membaca angka secara otomatis dari string 'usia_100', 'usia_200', dst.
         let batasUmur = parseInt(currentUsiaFilter.split('_')[1]); 
         let batasTahun = new Date().getFullYear() - batasUmur;
         
         matchUsia = tahunBangunan <= batasTahun;
       } else {
-        matchUsia = false; // Singkirkan bangunan yang tidak ada info tahun
+        matchUsia = false; 
       }
     }
     
     return matchRegion && matchFeature && matchSearch && matchUsia;
 
   }).sort((a, b) => {
-    // ============================================================
-    // PENGURUTAN (SORTING) BERDASARKAN USIA TERTUA
-    // ============================================================
-    // Berlaku untuk semua jenis filter usia (+50, +100, dst)
     if (currentUsiaFilter.startsWith('usia_')) {
       let aHasYear = !!a.rawTahunBerdiri;
       let bHasYear = !!b.rawTahunBerdiri;
@@ -605,7 +587,7 @@ function generateRecordDetails(qid) {
   } else {
     let namaAmanURL = encodeURIComponent(record.title);
     let gFormUrl = `https://docs.google.com/forms/d/e/1FAIpQLSeHMSn6cwcgbZ0xx1CJ5tGXDQacYgzRZUG51STByKUROWXgmg/viewform?usp=pp_url&entry.2138396049=${namaAmanURL}`;
-    articleHtml = `<div class="article main-text nodata"><p>Masjid ini belum memiliki artikel. <a href="${gFormUrl}" target="_blank" rel="noopener noreferrer" class="sunting-linktambah">Tambahkan!</a></p></div>`;
+    articleHtml = `<div class="article main-text nodata"><p>Bangunan ini belum memiliki artikel. <a href="${gFormUrl}" target="_blank" rel="noopener noreferrer" class="sunting-linktambah">Tambahkan!</a></p></div>`;
   }
   
   let wikiUrlUtama = `https://www.wikidata.org/wiki/${qid}`;
@@ -620,7 +602,7 @@ function generateRecordDetails(qid) {
     }
   }
 
-  let teksJudul = isBersejarah ? 'Masjid Bersejarah' : 'Informasi';
+  let teksJudul = isBersejarah ? 'Bangunan Bersejarah' : 'Informasi';
 
   let designationsHtml = `<h2 style="margin-top:10px">${teksJudul} ${tautanSuntingRingkasan}</h2>`;
   designationsHtml += '<ul class="designations">';
