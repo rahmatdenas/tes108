@@ -400,7 +400,6 @@ function populateMapAndIndex() {
     li.innerHTML = `<a href="#${qid}">${record.indexTitle}</a>`;
     record.indexLi = li;
   });
-  Cluster.addLayers(mapMarkers);
   populateProvinceIndexNodes(); 
   generateFilterSelect();
 }
@@ -632,23 +631,29 @@ function applyIntersectionFilter(preventZoom = false) {
     return a.indexTitle.localeCompare(b.indexTitle);    
   });
 
-  currentFilteredRecords = validRecords;
+currentFilteredRecords = validRecords;
   currentRenderIndex = 0; 
 
-  validRecords.forEach(record => {
-    if (record.mapMarker) validMarkers.push(record.mapMarker);
-  });
-
+  // 1. Gambar daftar list-nya dulu (Muncul Instan)
   renderNextChunk();
-
-  if (validMarkers.length > 0) {
-    Cluster.addLayers(validMarkers);
-    if (!preventZoom) {
-      Map.fitBounds(Cluster.getBounds());
-    }
-  }
   
+  // 2. Update jumlah hasil di kolom pencarian
   updateFeatureCounts(validRecords.length);
+
+  // 3. Masukkan pekerjaan berat (Peta) ke "jalur lambat" (Jeda 10ms)
+  // agar browser sempat memunculkan daftar ke layar pengguna
+  setTimeout(() => {
+    validRecords.forEach(record => {
+      if (record.mapMarker) validMarkers.push(record.mapMarker);
+    });
+
+    if (validMarkers.length > 0) {
+      Cluster.addLayers(validMarkers);
+      if (!preventZoom) {
+        Map.fitBounds(Cluster.getBounds());
+      }
+    }
+  }, 10);
 }
 
 function activateSite(qid) {
