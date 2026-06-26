@@ -387,7 +387,7 @@ optgroup option { padding-left: 10px; }
 #details .main-text .loader { margin: 40px auto 0; }
 #details .main-text p:first-child { margin-top: -5px; }
 
-.arsip-block p { padding-bottom: 10px !important; }
+.arsip-block p { padding-bottom: 15px !important; }
 
 /* --- Gambar & Figure --- */
 #details figure {
@@ -518,13 +518,12 @@ optgroup option { padding-left: 10px; }
 /* --- Designations --- */
 #details .designations {
   margin: 0;
-  padding: 0;
+  padding: 0 0 15px;
   overflow: hidden;
 }
 #details .designations li {
   position: relative;
   list-style: none;
-  padding: 0 0 15px;
   min-height: 50px;
   margin-right: 0;
 }
