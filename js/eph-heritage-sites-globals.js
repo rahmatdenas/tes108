@@ -182,24 +182,16 @@ const KUMPULAN_KUERI_0 = {
     SERVICE wikibase:label { bd:serviceParam wikibase:language "id". }
   }`,
 
-  'kuliner': `SELECT DISTINCT ?siteQid ?siteLabel ?provinsiQid ?provinsiLabel ?p131LokasiLabel ?tahunBerdiriMentah ?tahunPresisi
+'kuliner': `SELECT DISTINCT ?siteQid ?siteLabel ?provinsiQid ?provinsiLabel ?p131LokasiLabel ?tahunBerdiriMentah ?tahunPresisi
   WHERE {
     VALUES ?jenis { <PLACEHOLDER_JENIS> } 
 
-    {
-     <PLACEHOLDER_WILAYAH_1>
-      ?p131Lokasi wdt:P131* ?provinsi .
-      ?site wdt:P31 ?jenis ;
-            wdt:P2341 ?asal .
-      ?asal wdt:P131 ?p131Lokasi .
-    }
-    UNION
-    {
-      <PLACEHOLDER_WILAYAH_2>
-      ?site wdt:P31 ?jenis ;
-            wdt:P2341 ?asal .
-      ?asal wdt:P131 ?p131Lokasi .
-    }
+    <PLACEHOLDER_WILAYAH_1>
+    ?p131Lokasi wdt:P131* ?provinsi .
+    
+    ?site wdt:P31 ?jenis ;
+          wdt:P2341 ?asal .
+    ?asal wdt:P131 ?p131Lokasi .
     
     OPTIONAL { 
       ?site p:P571 ?inceptionStmt .
