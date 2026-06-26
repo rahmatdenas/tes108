@@ -8,9 +8,9 @@ const KUMPULAN_KUERI_0 = {
     VALUES ?jenis { <PLACEHOLDER_JENIS> } 
     {
       <PLACEHOLDER_WILAYAH_1>
-      ?p131Lokasi wdt:P131* ?provinsi .
       ?site wdt:P31 ?jenis ;
             wdt:P131 ?p131Lokasi .
+      ?p131Lokasi wdt:P131* ?provinsi .
     }
     UNION
     {
