@@ -152,7 +152,8 @@ function dapatkanNamaKlaster(inputTxt) {
   
   const kelompokKuliner = ['Q19861951', 'Q3305213', 'Q87167', 'Q11460', 'Q107357104', 'Q189819', 'Q36192', 'Q7944'];
   if (kelompokKuliner.some(qid => teks.includes(qid))) return 'Kuliner';
-  
+  const kelompokWilayah = ['Q3199141', 'Q3191695'];
+  if (kelompokWilayah.some(qid => teks.includes(qid))) return 'Wilayah Administratif';
   // Jika tidak masuk daftar di atas, beri nama default
   return 'Objek'; 
 }
@@ -869,6 +870,9 @@ let wikiUrlUtama = `https://www.wikidata.org/wiki/${qid}`;
     // prefixLokasi = `${currentNamaKlaster} khas`;
     prefixLokasi = 'Lokasi'; 
     showTahun = false; 
+  }
+  else if (['Wilayah Administratif'].includes(currentNamaKlaster)) { 
+    prefixLokasi = 'Provinsi'; 
   }
   else if (['Karya Fiksi'].includes(currentNamaKlaster)) { prefixLokasi = 'Latar'; }
   else if (['Surat Kabar', 'Publikasi'].includes(currentNamaKlaster)) { prefixLokasi = 'Tempat terbit'; }
