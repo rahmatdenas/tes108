@@ -6,12 +6,13 @@ const KUMPULAN_KUERI_0 = {
   'universal': `SELECT DISTINCT ?siteQid ?siteLabel ?provinsiQid ?provinsiLabel ?p131LokasiLabel ?tahunBerdiriMentah ?tahunPresisi
   WHERE {
     VALUES ?jenis { <PLACEHOLDER_JENIS> } 
-    {
+    
+    <PLACEHOLDER_KURUNG_BUKA>
       <PLACEHOLDER_WILAYAH_1>
       ?site wdt:P31 ?jenis ;
             wdt:<PLACEHOLDER_PROP_LOKASI> ?p131Lokasi .
       <PLACEHOLDER_HIERARKI_LOKASI>
-    }
+    <PLACEHOLDER_KURUNG_TUTUP>
     
     <PLACEHOLDER_UNION_EKSTRA>
     
