@@ -116,7 +116,7 @@ loadingTimeoutToken = setTimeout(() => {
       
       // Pastikan statusnya memang masih mencari data (isFetching = true)
       if (loadingDesc && isFetching) {
-        loadingDesc.innerHTML = `Data yang ditarik mencapai ribuan. Estimasi proses penarikan data 3-5 menit...`;
+        loadingDesc.innerHTML = `Data yang ditarik mencapai ribuan.<br/>Estimasi proses penarikan data 3-5 menit...`;
       }
     }, 5000); // Set 5000 (5 detik)
     // =========================================================
