@@ -54,12 +54,14 @@ Map.on('popupopen', function(e) {
       
       let encodedFilename = encodeURIComponent(record.imageFilename);
       let imgUrl = `${COMMONS_WIKI_URL_PREF}Special:FilePath/${encodedFilename}?width=250`;
-      
-      let imgHtml = `
-        <div style="text-align:center;margin-bottom: 5px;">
-          <img src="${imgUrl}" style=""width:100%; height:130px; object-fit:cover; border-radius:4px;" alt="Thumbnail">
-        </div>
-      `;
+let imgHtml = `
+            <div style="text-align:center; margin-bottom: 5px;">
+              <img src="${imgUrl}" 
+                   style="width:100%; height:130px; object-fit:cover; border-radius:4px;" 
+                   alt="Thumbnail"
+                   onload="if(Records['${qid}'] && Records['${qid}'].popup) Records['${qid}'].popup.update();">
+            </div>
+          `;
       e.popup.setContent(imgHtml + `${record.title}`);
       
       e.popup._hasImage = true; 
