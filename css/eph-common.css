@@ -126,7 +126,6 @@ nav li a {
   transition: background 0.3s, color 0.3s;
 }
 
-nav li a:hover,
 nav li a:active,
 nav li.selected > a, nav li > a.selected,
 nav li.active > a, nav li > a.active {
@@ -139,8 +138,9 @@ nav li.active > a, nav li > a.active {
 }
 
 
-#submenu-atas li a:hover {
+#submenu-atas li a:hover, nav li:hover {
     background: #611;
+   color: #fff
 }
 
 /* Mengunci warna tombol navigasi agar tidak kembali ke hitam bawaan browser */
