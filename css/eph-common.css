@@ -1,5 +1,5 @@
 /* ==========================================================================
-   1. PENGATURAN DASAR & UTILITAS
+   1. PENGATURAN DASAR & UTILITAS (OPTIMALISASI SELULER KETAT)
    ========================================================================== */
 html, body {
   margin: 0;
@@ -10,15 +10,47 @@ html, body {
 body {
   display: flex;
   align-items: stretch;
-}
-
-/* Pengelompokan atribut anti-blok blok teks agar efisien (DRY) */
-#branding, #index, nav ul,
-.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  
+  /* 1. KUNCI UTAMA: Matikan seleksi teks secara global di seluruh aplikasi */
   -webkit-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+}
+
+/* 2. ANTI-KILATAN: Hilangkan warna biru/hitam pekat saat elemen diklik di HP */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 3. ANTI-MENU HANTU: Blokir pop-up tahan lama (salin link/menu pop-up internal HP) */
+* {
+  -webkit-touch-callout: none;
+}
+
+/* ==========================================================================
+   ZONA PENGECUALIAN (AMNESTI FITUR)
+   ========================================================================== */
+
+/* A. Pastikan kotak input, select, dan textarea tetap bisa diketik & dipilih teksnya */
+input, textarea, select {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* B. Izinkan seleksi teks HANYA saat masuk di panel Details dan About */
+#details, #details *, 
+#about, #about * {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/* C. Izinkan LONG-PRESS khusus untuk Gambar Utama dan Gambar Arsip Sejarah */
+#details figure img,
+#details img,
+.arsip-block img,
+.historical-images-container img {
+  -webkit-touch-callout: default;
 }
 
 .leaflet-popup-tip-container {
