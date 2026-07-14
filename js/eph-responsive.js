@@ -16,7 +16,8 @@
   var isHandleTap    = false; 
   var activeScrollNode = null; 
   var preventNextClick = false; 
-
+var preventClickTimer = null;
+  
   function isMobile() {
     return window.matchMedia(MOBILE_QUERY).matches;
   }
