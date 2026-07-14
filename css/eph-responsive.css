@@ -23,9 +23,6 @@
     position: relative;
   }
 
-.eph-dragging #search-input {
-  pointer-events: none;
-}
    
   #panel,
   #map {
