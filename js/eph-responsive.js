@@ -255,6 +255,16 @@ function updateLabel(expanded) {
         e.preventDefault();
       }
     });
+
+    document.querySelectorAll('a[href="#hasil"]').forEach(function(btnHasil) {
+      btnHasil.addEventListener('click', function(e) {
+        if (isMobile() && window.setMobilePanelExpanded) {
+          // Perintahkan panel untuk meluncur ke atas secara instan
+          window.setMobilePanelExpanded(true);
+        }
+      });
+    });
+    
   });
 
   window.addEventListener('resize', handleViewportChange);
