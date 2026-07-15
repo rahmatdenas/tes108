@@ -1017,13 +1017,15 @@ function updateNavigationUI(fragment) {
   let subMenuAtas = document.getElementById('submenu-atas');
   let btnMenuInduk = document.getElementById('btn-menu-induk');
   
-  if (subMenuAtas) subMenuAtas.style.display = 'none';
+  // Catatan: Jika kamu pakai animasi CSS .tampil yang kita bahas sebelumnya, 
+  // ganti baris di bawah ini menjadi subMenuAtas.classList.remove('tampil');
+  if (subMenuAtas) subMenuAtas.style.display = 'none'; 
+  
   if (btnMenuInduk && btnMenuInduk.parentElement) {
       btnMenuInduk.parentElement.classList.remove('selected', 'active');
   }
 
-  // Deteksi apakah yang sedang dibuka adalah Detail Butir yang valid
-  let isDetailView = (fragment !== '' && fragment !== 'hasil' && fragment !== 'about' && PrimaryDataIsLoaded && (fragment in Records));
+  let isDetailView = (fragment !== '' && fragment !== 'hasil' && fragment !== 'about' && fragment !== 'tutorial' && fragment !== 'medsos' && PrimaryDataIsLoaded && (fragment in Records));
 
   if (isDetailView) {
     navStandar.style.display = 'none';
@@ -1031,7 +1033,6 @@ function updateNavigationUI(fragment) {
     
     let btnPrev = document.getElementById('btn-prev');
     let btnNext = document.getElementById('btn-next');
-    
     let currentIndex = currentFilteredRecords.findIndex(r => r === Records[fragment]);
     
     if (currentIndex === -1) {
@@ -1040,24 +1041,18 @@ function updateNavigationUI(fragment) {
        currentIndex = currentFilteredRecords.findIndex(r => r === Records[fragment]);
     }
     
-    // LOGIKA TOMBOL LOOPING (KORSEL)
     let totalItems = currentFilteredRecords.length;
-
     if (totalItems > 1 && currentIndex !== -1) {
       let prevIndex = (currentIndex === 0) ? (totalItems - 1) : (currentIndex - 1);
       let nextIndex = (currentIndex === totalItems - 1) ? 0 : (currentIndex + 1);
 
-      let prevQid = currentFilteredRecords[prevIndex].id;
-      let nextQid = currentFilteredRecords[nextIndex].id;
-
-      btnPrev.href = '#' + prevQid;
+      btnPrev.href = '#' + currentFilteredRecords[prevIndex].id;
       btnPrev.style.opacity = '1';
       btnPrev.style.pointerEvents = 'auto';
 
-      btnNext.href = '#' + nextQid;
+      btnNext.href = '#' + currentFilteredRecords[nextIndex].id;
       btnNext.style.opacity = '1';
       btnNext.style.pointerEvents = 'auto';
-      
     } else {
       btnPrev.removeAttribute('href');
       btnPrev.style.opacity = '0.3';
@@ -1069,32 +1064,36 @@ function updateNavigationUI(fragment) {
     }
 
   } else {
-    // KEMBALI KE MODE STANDAR (Beranda | Hasil | Tentang)
     navStandar.style.display = 'flex';
     navDetail.style.display = 'none';
   }
 
   // =======================================================
-  // KUNCI PERBAIKAN B: ATUR LAMPU NAVIGASI (DI LUAR IF-ELSE)
+  // KUNCI PERBAIKAN B: ATUR LAMPU NAVIGASI DINAMIS
   // =======================================================
   
-  // 1. Sikat bersih semua status aktif di menu standar maupun detail tanpa pandang bulu
   document.querySelectorAll('#nav-standar > li, #nav-detail > li').forEach(li => {
     li.classList.remove('selected', 'active');
   });
 
-  // 2. Nyalakan kembali hanya jika hashtag di URL benar-benar cocok
   document.querySelectorAll('#nav-standar > li, #nav-detail > li').forEach(li => {
     let link = li.querySelector('a'); 
     if (!link) return;
     let hrefVal = link.getAttribute('href');
+    let linkId = link.getAttribute('id');
     
-    if (fragment === 'hasil' && hrefVal === '#hasil') {
+    // 1. Lampu Beranda menyala jika fragment kosong
+    if ((fragment === '' || fragment === 'landing') && hrefVal === '#') {
       li.classList.add('selected');
     } 
-    else if (fragment === 'about' && hrefVal === '#about') {
+    // 2. Lampu Hasil menyala
+    else if (fragment === 'hasil' && hrefVal === '#hasil') {
       li.classList.add('selected');
     } 
+    // 3. Lampu "Lainnya" menyala jika kita sedang membuka Tentang, Tutorial, atau Medsos
+    else if ((fragment === 'about' || fragment === 'tutorial' || fragment === 'medsos') && linkId === 'btn-menu-induk') {
+      li.classList.add('selected');
+    }
   });
 }
 
