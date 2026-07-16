@@ -818,7 +818,17 @@ detailsElem.appendChild(record.panelElem);
         img.src = currentSrc; // Isi kembali untuk memaksa browser mengulang request HTTP
       }
     });
-    
+let stuckCaptions = record.panelElem.querySelectorAll('figcaption');
+    stuckCaptions.forEach(caption => {
+      // Jika teksnya masih nyangkut di memuat...
+      if (caption.textContent.includes('(Memuat…)')) {
+        let encodedFile = caption.getAttribute('data-filename');
+        if (encodedFile) {
+          // KUNCI: Cukup panggil fungsi pembantunya di sini!
+          tarikMetadataCaption(encodedFile, null, caption);
+        }
+      }
+    });
     displayPanelContent('details');
   }
   else {
@@ -829,95 +839,21 @@ detailsElem.appendChild(record.panelElem);
 function generateFigure(filename, title = "Situs", classNames = []) {
   if (filename) {
     let uniqueId = 'caption-' + Math.random().toString(36).substr(2, 9);
-    
-    // Siapkan Parameter URL (Tambahkan origin=*)
-    let url = new URL(COMMONS_API_URL);
-    let params = {
-      action: 'query',
-      format: 'json',
-      prop: 'imageinfo',
-      iiprop: 'extmetadata',
-      titles: 'File:' + filename,
-      origin: '*' // Kunci penting untuk Fetch API ke Wikipedia
-    };
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
-
-    // =========================================================
-    // 1. TAMBAHKAN SIGNAL KE DALAM FETCH
-    // =========================================================
-    fetch(url, { signal: globalFetchController.signal })
-      .then(response => {
-        if (!response.ok) throw new Error('Network response was not ok');
-        return response.json();
-      })
-      .then(data => {
-        let pages = data.query.pages;
-        let page = Object.values(pages)[0];
-        
-        // Mencegah error jika gambar di Commons sudah dihapus/hilang
-        if (page.imageinfo && page.imageinfo[0].extmetadata) {
-          let metadata = page.imageinfo[0].extmetadata;
-          
-          let artistHtml = '';
-          if (metadata.Artist) {
-              artistHtml = metadata.Artist.value.trim();
-              artistHtml = artistHtml.replace(/<(?!\/?a ?)[^>]+>/g, '');
-              artistHtml = artistHtml.replace(/Unknown authorUnknown author/gi, 'Tak diketahui');
-              artistHtml = artistHtml.replace(/UnknownUnknown/gi, 'Tak diketahui');
-              artistHtml = artistHtml.replace(/AnonymousUnknown author/gi, 'Anonim');
-              if (artistHtml.search('href="//') >= 0) {
-                artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//g, 'href="https://');
-              }
-              artistHtml = artistHtml.replace(/<a /gi, '<a target="_blank" ');
-          }
-          
-          let licenseHtml = '';
-          if (metadata.AttributionRequired && metadata.AttributionRequired.value === 'true') {
-            licenseHtml = metadata.LicenseShortName.value.replace(/ /g, ' ');
-            licenseHtml = licenseHtml.replace(/-/g, '‑');
-            licenseHtml = `[${licenseHtml}]`;
-            if (metadata.LicenseUrl) {
-              licenseHtml = `<a href="${metadata.LicenseUrl.value}" target="_blank">${licenseHtml}</a>`;
-            }
-            licenseHtml = ' ' + licenseHtml;
-          }
-          
-          let targetCaption = document.getElementById(uniqueId);
-          if (targetCaption) {
-              targetCaption.innerHTML = artistHtml + licenseHtml;
-          }
-        } else {
-          // Jika metadata kosong
-          let targetCaption = document.getElementById(uniqueId);
-          if (targetCaption) targetCaption.innerHTML = 'Data lisensi tidak tersedia.';
-        }
-      })
-      .catch(error => {
-        // =========================================================
-        // 2. CEGAT ERROR JIKA DIBATALKAN OLEH RESET APP
-        // =========================================================
-        if (error.name === 'AbortError') {
-          // Jika sengaja dibunuh, diamkan saja. Jangan ubah HTML atau cetak error.
-          return;
-        }
-
-        // Jika error murni (jaringan putus dsb), jalankan kode asli Anda
-        console.error('Gagal memuat metadata gambar:', error);
-        let targetCaption = document.getElementById(uniqueId);
-        if (targetCaption) targetCaption.innerHTML = 'Data gagal dimuat.';
-      });
-
-    // Output HTML tetap sama seperti sebelumnya
     let encodedFilename = encodeURIComponent(filename);
+    
+    // KUNCI: Cukup panggil fungsi pembantunya di sini!
+    tarikMetadataCaption(encodedFilename, uniqueId, null);
+
     return (
       `<figure class="${classNames.join(' ')}">` +
         `<a href="${COMMONS_WIKI_URL_PREF}File:${encodedFilename}" target="_blank">` +
           `<img class="loading" src="${COMMONS_WIKI_URL_PREF}Special:FilePath/${encodedFilename}?width=500" alt="" onload="this.className=''">` +
         '</a>' +
-        `<figcaption id="${uniqueId}">(Memuat…)</figcaption>` +
+        `<figcaption id="${uniqueId}" data-filename="${encodedFilename}">(Memuat…)</figcaption>` +
       '</figure>'
     );
   } else {
+    // KODE JIKA TIDAK ADA GAMBAR (Biarkan tetap sama)
     let namaAmanURL = encodeURIComponent(title);
     let gFormFotoUrl = `https://docs.google.com/forms/d/e/1FAIpQLSd7_u-7yCwDtXIkDO--bILry6mWGoRCnnfSumL_PEjfle0aLg/viewform?usp=pp_url&entry.2138396049=${namaAmanURL}`;
     return `<figure class="${classNames.join(' ')} nodata">Belum ada foto. <a href="${gFormFotoUrl}" target="_blank" rel="noopener noreferrer" style="border:none;" class="sunting-linktambah">Tambahkan!</a></figure>`;
@@ -1104,6 +1040,58 @@ function updateNavigationUI(fragment) {
       li.classList.add('selected');
     }
   });
+}
+
+// =========================================================
+// FUNGSI PEMBANTU: Menarik & Merapikan Metadata Gambar
+// =========================================================
+function tarikMetadataCaption(filename, targetId, targetNode = null) {
+  let url = new URL(COMMONS_API_URL);
+  let params = {
+    action: 'query', format: 'json', prop: 'imageinfo',
+    iiprop: 'extmetadata', titles: 'File:' + decodeURIComponent(filename), origin: '*'
+  };
+  Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+  // Gunakan sinyal Abort hanya untuk tarikan pertama (bukan saat memperbaiki yang nyangkut)
+  let fetchOptions = {};
+  if (!targetNode && typeof globalFetchController !== 'undefined') {
+    fetchOptions.signal = globalFetchController.signal;
+  }
+
+  fetch(url, fetchOptions)
+    .then(res => res.ok ? res.json() : Promise.reject())
+    .then(data => {
+      let pages = data.query.pages;
+      let page = Object.values(pages)[0];
+      
+      // Deteksi elemen target (Bisa lewat ID, bisa lewat Node langsung)
+      let targetCaption = targetNode || document.getElementById(targetId);
+      if (!targetCaption) return;
+
+      if (page.imageinfo && page.imageinfo[0].extmetadata) {
+        let metadata = page.imageinfo[0].extmetadata;
+        
+        let artistHtml = metadata.Artist ? metadata.Artist.value.trim().replace(/<(?!\/?a ?)[^>]+>/g, '').replace(/Unknown authorUnknown author|UnknownUnknown/gi, 'Tak diketahui').replace(/AnonymousUnknown author/gi, 'Anonim') : '';
+        if (artistHtml.includes('href="//')) artistHtml = artistHtml.replace(/href="(?:https?:)?\/\//g, 'href="https://');
+        artistHtml = artistHtml.replace(/<a /gi, '<a target="_blank" ');
+
+        let licenseHtml = '';
+        if (metadata.AttributionRequired && metadata.AttributionRequired.value === 'true') {
+          licenseHtml = metadata.LicenseShortName.value.replace(/ /g, ' ').replace(/-/g, '‑');
+          licenseHtml = metadata.LicenseUrl ? ` <a href="${metadata.LicenseUrl.value}" target="_blank">[${licenseHtml}]</a>` : ` [${licenseHtml}]`;
+        }
+        
+        targetCaption.innerHTML = artistHtml + licenseHtml;
+      } else {
+        targetCaption.innerHTML = 'Data lisensi tidak tersedia.';
+      }
+    })
+    .catch(error => {
+      if (error.name === 'AbortError') return;
+      let targetCaption = targetNode || document.getElementById(targetId);
+      if (targetCaption) targetCaption.innerHTML = 'Data gagal dimuat.';
+    });
 }
 
 // ============================================================
