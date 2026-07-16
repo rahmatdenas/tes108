@@ -1198,7 +1198,7 @@ window.addEventListener('load', function() {
 
       // Trik Cerdas: Naikkan resolusi ke 800px untuk versi Lightbox
       if (srcGambar.includes('?width=')) {
-        srcGambar = srcGambar.replace(/\?width=\d+/, '?width=800');
+        srcGambar = srcGambar.replace(/\?width=\d+/, '?width=500');
       }
 
       // 3. Masukkan data ke dalam elemen Lightbox
@@ -1209,3 +1209,13 @@ window.addEventListener('load', function() {
       lightbox.classList.add('aktif');
     }
   });
+  backdrop.addEventListener('click', function() {
+    lightbox.classList.remove('aktif');
+    
+    // Kosongkan gambar sejenak setelah animasi pudar selesai (0.3s) agar tidak nyangkut 
+    // jika nanti membuka gambar lain
+    setTimeout(() => { 
+      if (!lightbox.classList.contains('aktif')) imgElem.src = ''; 
+    }, 300);
+  });
+});
