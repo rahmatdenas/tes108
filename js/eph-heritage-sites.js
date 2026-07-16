@@ -541,7 +541,7 @@ async function populateImageAndWikipediaData() {
   try {
     if (totalData <= 20000) {
       // ========================================================
-      // SKENARIO A: Total ≤ 20.000 (FULL PARALEL)
+      // SKENARIO A: Total <= 20.000 (FULL PARALEL)
       // Tembak semua kloter serentak dalam 1 waktu!
       // ========================================================
       let chunksCompleted = 0;
@@ -550,22 +550,24 @@ async function populateImageAndWikipediaData() {
         return tarikSatuKloter(cicilan).then(() => {
           if (currentSearchToken !== tiketPencarianIni) throw 'ABORTED';
           
-          // Update Persentase
+          // 1. UPDATE TEKS SAJA DI SINI (Sangat ringan dan aman)
           chunksCompleted++;
           let persentase = Math.round((chunksCompleted / kelompokCicilan.length) * 100);
           if (btnImg && !btnImg.classList.contains('active')) btnImg.textContent = `Gambar (${persentase}%)`;
           if (btnArt && !btnArt.classList.contains('active')) btnArt.textContent = `Artikel (${persentase}%)`;
-          
-          // Update Peta & Daftar secara langsung
-          Object.values(Records).forEach(r => r.panelElem = undefined);
-          if (activeFeatures.has('image') || activeFeatures.has('article')) {
-            applyIntersectionFilter(true); 
-          }
         });
       });
 
-      // Tunggu SEMUA selesai
+      // Tunggu SEMUA kloter paralel selesai menembak
       await Promise.all(daftarJanji);
+
+      if (currentSearchToken !== tiketPencarianIni) throw 'ABORTED';
+
+      // 2. UPDATE PETA & DAFTAR CUKUP 1 KALI DI SINI (Anti-Ngelag)
+      Object.values(Records).forEach(r => r.panelElem = undefined);
+      if (activeFeatures.has('image') || activeFeatures.has('article')) {
+        applyIntersectionFilter(true); 
+      }
 
     } else {
       // ========================================================
