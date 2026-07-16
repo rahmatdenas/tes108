@@ -265,24 +265,58 @@ window.addEventListener('click', function(e) {
         e.preventDefault();
       }
     });
+
+    let logoIkon = document.getElementById('branding-icon');
+    if (logoIkon) {
+      logoIkon.addEventListener('click', function(e) {
+        // Hanya jalankan fungsi ini di tampilan HP
+        if (isMobile() && window.setMobilePanelExpanded) {
+          e.preventDefault(); // Mencegah perilaku default gambar
+          
+          // Cek posisi panel saat ini (sama seperti logika navigasi)
+          let isCurrentlyExpanded = currentY < 50;
+          
+          // Balikkan posisinya (Jika buka jadi tutup, jika tutup jadi buka)
+          window.setMobilePanelExpanded(!isCurrentlyExpanded);
+        }
+      });
+    }
+    
 let targetNavigasi = '#nav-standar a:not(#btn-menu-induk), #nav-detail a[href="#hasil"]';
 
-document.querySelectorAll(targetNavigasi).forEach(function(btnNav) {
-  btnNav.addEventListener('click', function(e) {
-    let hrefVal = this.getAttribute('href');
+    document.querySelectorAll(targetNavigasi).forEach(function(btnNav) {
+      btnNav.addEventListener('click', function(e) {
+        let hrefVal = this.getAttribute('href');
 
-    // 1. Jika di mobile, perintahkan panel naik dengan animasi mulus
-    if (isMobile() && window.setMobilePanelExpanded) {
-      window.setMobilePanelExpanded(true);
-    }
-    if (hrefVal && hrefVal.startsWith('#')) {
-      e.preventDefault(); 
-      if (window.location.hash !== hrefVal) {
-        window.location.hash = hrefVal;
-      }
-    }
-  });
-});
+        if (hrefVal && hrefVal.startsWith('#')) {
+          e.preventDefault();
+
+          // Normalisasi hash agar Beranda (kosong) dan '#' dianggap sama
+          let currentHash = window.location.hash || '#';
+          let targetHash = hrefVal === '#' ? '#' : hrefVal;
+
+          if (isMobile() && window.setMobilePanelExpanded) {
+            // Cek status panel saat ini (karena ada di scope yang sama, kita bisa baca currentY)
+            let isCurrentlyExpanded = currentY < 50;
+
+            if (currentHash === targetHash) {
+              // KONDISI 1: Pengguna mengklik tombol dari halaman yang sedang aktif.
+              // Jadikan tombol berfungsi ganda seperti Handle (Sakelar Naik/Turun).
+              window.setMobilePanelExpanded(!isCurrentlyExpanded);
+            } else {
+              // Pindah ke tab baru: Paksa panel naik dan ganti URL.
+              window.setMobilePanelExpanded(true);
+              window.location.hash = hrefVal;
+            }
+          } else {
+            // Mode Desktop: Langsung ganti hash jika berbeda
+            if (window.location.hash !== hrefVal) {
+              window.location.hash = hrefVal;
+            }
+          }
+        }
+      });
+    });
     
   });
 
