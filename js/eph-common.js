@@ -592,8 +592,8 @@ async function queryWdqsPaginated(queryTemplate, processEachResult, postprocessC
          let progressText = document.querySelector('#index-list p');
          // Jangan ubah teks jika rem darurat sudah ditarik
          if (progressText && !window.hentikanPencarian) {
-           progressText.innerHTML = `Selesai menarik <b>${totalDataTerkumpul.toLocaleString('id-ID')}</b> data. Penarikan data masih berlanjut... <br><br>
-           <a href="#" onclick="window.konfirmasiBerhenti(); return false;" style="color:#7b0d0c; font-weight:bold; font-size: 13px; text-decoration:underline; display:inline-block; margin-top:5px;">Klik di sini jika Anda ingin mencukupkan pencarian</a>`;
+           progressText.innerHTML = `Selesai menarik <b>${totalDataTerkumpul.toLocaleString('id-ID')}</b> data. Penarikan data masih berlanjut... <br>
+           <a href="#" onclick="window.konfirmasiBerhenti(); return false;" style="color:#7b0d0c; font-weight:bold; font-size: 13px; text-decoration:underline; display:inline-block; margin-top:5px;">Klik di sini</a> jika Anda ingin mencukupkan pencarian.`;
          }
       }
       offset += chunkSize;
