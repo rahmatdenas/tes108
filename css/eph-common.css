@@ -433,6 +433,12 @@ background-position: calc(100% - 15px) calc(50% - 3px);
   cursor: pointer;
   margin: 0 -15px 0 0;}
 
+#search-input:not(:placeholder-shown)::-webkit-search-cancel-button {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* ==========================================================================
    6. DAFTAR INDEKS (List)
    ========================================================================== */
