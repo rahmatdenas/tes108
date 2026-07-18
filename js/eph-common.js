@@ -28,7 +28,6 @@ var isAppInitialLoad      = true; // Tambahkan ini!
 var isFetching            = false; // Menandai apakah satpam sedang mencari data
 var currentSearchToken    = 0;     // <--- Letakkan di sini (berdekatan dengan isFetching)
 var globalFetchController = new AbortController(); // <--- (Jika Anda jadi memasang AbortController)
-var activeXhrs            = [];
 var currentActiveShapeLayer = null;
 var currentDisplayedQid = null;
 var lastValidHash   = 'landing';
@@ -90,20 +89,16 @@ window.konfirmasiBerhenti = function() {
       if (yakin) {
         window.hentikanPencarian = true; 
         
-        // 1. Ubah teks detik itu juga agar UI tidak terasa beku
         let progressText = document.querySelector('#index-list p');
         if (progressText) {
            progressText.innerHTML = `<span style="color:#7b0d0c; font-weight:bold;">Memutus koneksi... Menyiapkan data yang terselamatkan.</span><br><br>Mohon tunggu sebentar, sistem sedang membangun koordinat peta...`;
         }
 
-        // 2. BUNUH KONEKSI YANG SEDANG BERJALAN SECARA PAKSA!
-        if (typeof activeXhrs !== 'undefined' && activeXhrs.length > 0) {
-          let xhrToAbort = [...activeXhrs]; 
-          activeXhrs = []; 
-          xhrToAbort.forEach(xhr => {
-            xhr.isAbortedManually = true; 
-            xhr.abort(); // Tembak mati request yang sedang nyangkut
-          });
+        // BUNUH KONEKSI SECARA PAKSA!
+        if (typeof globalFetchController !== 'undefined') {
+          globalFetchController.abort();
+          // Catatan: Tidak perlu membuat AbortController baru di sini karena 
+          // ini hanya memotong data (pencarian masih berstatus aktif).
         }
       }
     });
@@ -263,20 +258,6 @@ function resetApp() {
     clearTimeout(loadingTimeoutToken);
     loadingTimeoutToken = null;
   }
-  
-  // 1. Bunuh Koneksi yang Sedang Berjalan
-  if (activeXhrs.length > 0) {
-    let xhrToAbort = [...activeXhrs]; 
-    activeXhrs = []; 
-    xhrToAbort.forEach(xhr => {
-      xhr.isAbortedManually = true; 
-      xhr.abort();
-    });
-  }
-
-  // =========================================================
-  // +++ TAMBAHKAN DI SINI: BUNUH FETCH API (GAMBAR & ARTIKEL)
-  // =========================================================
   if (typeof globalFetchController !== 'undefined') {
     globalFetchController.abort(); // Tarik pelatuk untuk mematikan fetch background
     globalFetchController = new AbortController(); // Beri nyawa baru untuk pencarian berikutnya
@@ -463,40 +444,37 @@ if (currentZoom >= maxZoom || isSamePoint) {
   });
 }
 
-function queryWdqsThenProcess(query, processEachResult, postprocessCallback) {
+// Tambahkan parameter 'signal' di bagian akhir
+function queryWdqsThenProcess(query, processEachResult, postprocessCallback, signal = null) {
   let promise = new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
     
-    activeXhrs.push(xhr);
+    // +++ KUNCI ABORT CONTROLLER +++
+    if (signal) {
+      // 1. Jika request keburu dibatalkan sebelum sempat dikirim
+      if (signal.aborted) return reject('ABORTED');
+      
+      // 2. Pasang telinga: jika sinyal ditarik, bunuh XHR ini!
+      signal.addEventListener('abort', () => {
+        xhr.abort();
+        reject('ABORTED');
+      });
+    }
 
     xhr.onreadystatechange = function() {
       if (xhr.readyState !== xhr.DONE) return;
 
-      let index = activeXhrs.indexOf(xhr);
-      if (index > -1) activeXhrs.splice(index, 1);
-
       if (xhr.status === 200) {
         resolve(JSON.parse(xhr.responseText));
       } else if (xhr.status === 0) {
-        // Cek apakah ini sengaja dibatalkan
-        if (xhr.isAbortedManually) {
-          reject('ABORTED');
-        } else {
-          // Jika tidak ada tanda sengaja, berarti ini murni masalah jaringan!
-          reject('NETWORK_ERROR'); 
-        }
+        // Jika status 0 dan signal tertangkap 'aborted', berarti ini dibatalkan
+        reject((signal && signal.aborted) ? 'ABORTED' : 'NETWORK_ERROR');
       } else {
         reject(xhr.status);
       }
     };
     
     xhr.open('POST', WDQS_API_URL, true);
-    
-    // --- KUNCI PERBAIKAN CORS ---
-    // 1. Matikan overrideMimeType karena memicu Preflight CORS
-    // 2. Matikan Api-User-Agent khusus (WDQS Blazegraph sering menolak ini dari browser)
-    // 3. Cukup gunakan header standar agar menjadi "CORS Simple Request"
-    
     xhr.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
     xhr.setRequestHeader('Accept', 'application/sparql-results+json');
     
@@ -511,16 +489,21 @@ function queryWdqsThenProcess(query, processEachResult, postprocessCallback) {
   return promise;
 }
 
-function fetchWdqsRaw(query) {
+function fetchWdqsRaw(query, signal = null) {
   return new Promise((resolve, reject) => {
     let xhr = new XMLHttpRequest();
-    activeXhrs.push(xhr);
+
+    // +++ KUNCI ABORT CONTROLLER +++
+    if (signal) {
+      if (signal.aborted) return reject('ABORTED');
+      signal.addEventListener('abort', () => {
+        xhr.abort();
+        reject('ABORTED');
+      });
+    }
 
     xhr.onreadystatechange = function() {
       if (xhr.readyState !== xhr.DONE) return;
-
-      let idx = activeXhrs.indexOf(xhr);
-      if (idx > -1) activeXhrs.splice(idx, 1);
 
       if (xhr.status === 200) {
         try {
@@ -530,9 +513,9 @@ function fetchWdqsRaw(query) {
           reject('PARSE_ERROR');
         }
       } else if (xhr.status === 0) {
-        reject(xhr.isAbortedManually ? 'ABORTED' : 'NETWORK_ERROR');
+        reject((signal && signal.aborted) ? 'ABORTED' : 'NETWORK_ERROR');
       } else {
-        reject(xhr.status); // termasuk 502
+        reject(xhr.status); 
       }
     };
 
@@ -545,16 +528,19 @@ function fetchWdqsRaw(query) {
   });
 }
 
-async function fetchWdqsRawWithRetry(query, maxRetry = 3, offsetLabel = '') {
+async function fetchWdqsRawWithRetry(query, maxRetry = 3, offsetLabel = '', signal = null) {
   for (let attempt = 1; attempt <= maxRetry; attempt++) {
     try {
       if (attempt > 1) {
         let progressText = document.querySelector('#index-list p');
         if (progressText) {
-          progressText.innerHTML = `Sedang melakukan percobaan ulang${offsetLabel} (${attempt}/${maxRetry})...`;
+           progressText.innerHTML = `Sedang melakukan percobaan ulang${offsetLabel} (${attempt}/${maxRetry})...`;
         }
       }
-      let result = await fetchWdqsRaw(query);
+      
+      // Sekarang variabel signal dikenali dengan aman
+      let result = await fetchWdqsRaw(query, signal);
+      
       if (attempt > 1) {
         console.log(`[${offsetLabel}] Berhasil setelah percobaan ke-${attempt}`);
       }
@@ -570,15 +556,15 @@ async function fetchWdqsRawWithRetry(query, maxRetry = 3, offsetLabel = '') {
         progressText.innerHTML = `<span style="color:#cc0000; font-weight:bold;">Percobaan ${attempt}/${maxRetry} gagal${offsetLabel}. Melakukan penarikan ulang.</span>`;
       }
 
-if (attempt === maxRetry) {
-  let tiketSaatIni = currentSearchToken;   // simpan: "saat ini tiketnya 1000"
-  await new Promise(r => setTimeout(r, 400));
-  if (currentSearchToken !== tiketSaatIni) throw 'ABORTED';  // "lho, sekarang tiketnya sudah 0, berarti user sudah reset!"
-  throw error;
-}
+      if (attempt === maxRetry) {
+        let tiketSaatIni = currentSearchToken;
+        await new Promise(r => setTimeout(r, 400));
+        if (currentSearchToken !== tiketSaatIni) throw 'ABORTED'; 
+        throw error;
+      }
       await new Promise(r => setTimeout(r, 1500 * attempt));
+    }
   }
-}
 }
 
 // FUNGSI BARU #3: Loop LIMIT/OFFSET, PAKAI JUMLAH ENTITAS UNIK (?SQ) sebagai penanda halaman terakhir
