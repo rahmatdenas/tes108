@@ -66,7 +66,6 @@ function loadPrimaryData() {
       
       enableApp(); 
       applyIntersectionFilter(); 
-      processHashChange();
 
       let btnAll = document.getElementById('btn-all');
       if (btnAll) {
